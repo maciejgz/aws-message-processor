@@ -32,3 +32,22 @@ EKS - Kubernetes w AWS - nie jest używany, ponieważ jest to rozwiązanie droż
 - Automatyzacja procesu logowania aplikacji - AWS CloudWatch
 - Przechowywanie konfiguracji aplikacji w bezpiecznym miejscu - AWS Secrets Manager
 
+### Install
+#### Build
+1. Zainstaluj JDK 21
+2. Zbuduj aplikację:
+```
+./mavenw.bat clean compile package
+```
+
+#### Deploy to AWS
+1. Zainstaluj AWS CLI
+2. Skonfiguruj AWS CLI
+3. Skonfiguruj Terraform w katalogu `aws` jeśli nie ma w nim katalogu `.terraform`:
+   ```
+   terraform init
+   ```
+5. Uruchom w katalogu `aws`:
+    ```
+    terraform apply
+    ```

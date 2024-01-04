@@ -8,6 +8,9 @@
   <packaging>pom</packaging>
 
   <name>aws-message-processor</name>
+  <modules>
+    <module>aws-mp-lambda</module>
+  </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
