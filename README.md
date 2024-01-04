@@ -17,3 +17,18 @@ Całość jest zautomatyzowana przy pomocy Terraform. Wystarczy wykonać `terraf
 Uwagi: 
 EKS - Kubernetes w AWS - nie jest używany, ponieważ jest to rozwiązanie droższe i bardziej skomplikowane niż ECS.
 
+### Wymagania
+#### Wymagania funkcjonalne
+- Aplikacja musi umożliwiać przetwarzanie wiadomości w czasie rzeczywistym
+- Aplikacja musi umożliwiać przetwarzanie wiadomości w formacie JSON
+- Aplikacja msui zapisywać przetworzone wiadomości w formacie JSON w S3
+
+#### Wymagania niefunkcjonalne
+- Konfiguracaja w całości poprzez kod (Infrastructure as Code) - Terraform
+- Automatyzacja procesu budowania i wdrażania aplikacji - GitHub Actions
+- Automatyzacja procesu testowania aplikacji - GitHub Actions
+- Automatyzacja procesu przetwarzania wiadomości - AWS Lambda, AWS ECS
+- Automatyzacja procesu monitorowania aplikacji - AWS CloudWatch
+- Automatyzacja procesu logowania aplikacji - AWS CloudWatch
+- Przechowywanie konfiguracji aplikacji w bezpiecznym miejscu - AWS Secrets Manager
+
