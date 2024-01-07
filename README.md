@@ -32,6 +32,21 @@ EKS - Kubernetes w AWS - nie jest używany, ponieważ jest to rozwiązanie droż
 - Automatyzacja procesu logowania aplikacji - AWS CloudWatch
 - Przechowywanie konfiguracji aplikacji w bezpiecznym miejscu - AWS Secrets Manager
 
+### Komponenty
+#### API Gateway
+
+#### Lambda
+Prosta lambda odbierająca wiadomości od klientów, dodająca losowy ciąg znaków (symulacja) i wysyłająca je do kolejki SQS.
+
+#### SQS
+Kolejka wiadomości do przetworzenia przez workery w ECS.
+
+#### ECS
+Kontenery Dockerowe z aplikacją Spring Boot, które przetwarzają dodaj(symulacja) wiadomości z kolejki SQS i zapisują je w S3.
+
+#### S3
+Przechowuje przetworzone wiadomości w formacie JSON do dalszego przetwarzania przez inne systemy (symulacja).
+
 ### Install
 #### Build
 1. Zainstaluj JDK 21
@@ -47,7 +62,12 @@ EKS - Kubernetes w AWS - nie jest używany, ponieważ jest to rozwiązanie droż
    ```
    terraform init
    ```
-5. Uruchom w katalogu `aws`:
+5. Uruchom w katalogu `aws` najpierw testując konfigurację:
+    ```
+    terraform plan
+    ```
+   
+    a następnie wdrażając konfigurację:
     ```
     terraform apply
     ```
