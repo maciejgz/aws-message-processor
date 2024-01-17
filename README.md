@@ -75,8 +75,15 @@ Przechowuje przetworzone wiadomości w formacie JSON do dalszego przetwarzania p
 
 1. Zainstaluj AWS CLI
 2. Skonfiguruj AWS CLI
-3. push obrazu aws-mp-message-saver do ECR powinien być wykonany automatycznie przez GitHub Actions - ręcznie push
-   obrazu można wykonać poleceniem opisanym w `View push commands` w konsoli ECR
+3. Push obrazu aws-mp-message-saver do ECR powinien być wykonany automatycznie przez GitHub Actions - ręcznie push
+   obrazu można wykonać poleceniem opisanym w `View push commands` w konsoli ECR. Zazwyczaj wygląda to tak:
+```
+skonfigurwoać AWS CLI
+komendy do wykonania w PowerShell:
+(Get-ECRLoginCommand).Password | docker login --username AWS --password-stdin <adres_ECR>
+docker tag mg/aws-mp:latest <adres_ECR>/mg/aws-mp:latest
+docker push <adres_ECR>/mg/aws-mp:latest
+```
 4. Skonfiguruj Terraform w katalogu `aws` jeśli nie ma w nim katalogu `.terraform`:
    ```
    terraform init
@@ -85,7 +92,6 @@ Przechowuje przetworzone wiadomości w formacie JSON do dalszego przetwarzania p
     ```
     terraform plan
     ```
-
    a następnie wdrażając konfigurację:
     ```
     terraform apply
