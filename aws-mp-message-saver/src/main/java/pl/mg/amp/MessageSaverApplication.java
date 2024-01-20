@@ -1,6 +1,7 @@
 package pl.mg.amp;
 
 import com.amazonaws.secretsmanager.caching.SecretCache;
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -31,9 +32,13 @@ public class MessageSaverApplication {
         System.out.println("Performing a task...");
     }
 
-    private final SecretCache cache  = new SecretCache();
+    AWSSecretsManagerClientBuilder secretsManager = AWSSecretsManagerClientBuilder.standard()
+            .withRegion("eu-central-1");
+
+    private final SecretCache cache = new SecretCache(secretsManager);
+
     public String getSecret() {
-        final String secret  = cache.getSecretString("secret.variable");
+        final String secret = cache.getSecretString("secret.variable");
         System.out.println("Secret: " + secret);
         return null;
     }
