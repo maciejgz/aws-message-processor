@@ -1,7 +1,5 @@
 package pl.mg.amp;
 
-import com.amazonaws.secretsmanager.caching.SecretCache;
-import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -14,8 +12,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class MessageSaverApplication {
 
 
-    @Value("${secret.variable:default_value}")
+    @Value("${secret.variable:default_secret_value}")
     private String secretVariable;
+
+    @Value("${env.variable:default_env_value}")
+    private String envVariable;
 
     public static void main(String[] args) {
         SpringApplication.run(MessageSaverApplication.class, args);
@@ -24,7 +25,8 @@ public class MessageSaverApplication {
     @PostConstruct
     public void init() {
         System.out.println("Secret variable: " + secretVariable);
-        this.getSecret();
+        System.out.println("Env variable: " + envVariable);
+//        this.getSecretCached();
     }
 
     @Scheduled(fixedRate = 5000)
@@ -32,15 +34,14 @@ public class MessageSaverApplication {
         System.out.println("Performing a task...");
     }
 
-    AWSSecretsManagerClientBuilder secretsManager = AWSSecretsManagerClientBuilder.standard()
+    /*AWSSecretsManagerClientBuilder secretsManager = AWSSecretsManagerClientBuilder.standard()
             .withRegion("eu-central-1");
 
     private final SecretCache cache = new SecretCache(secretsManager);
 
-    public String getSecret() {
+    public void getSecretCached() {
         final String secret = cache.getSecretString("secret.variable");
-        System.out.println("Secret: " + secret);
-        return null;
-    }
+        System.out.println("Secret cached: " + secret);
+    }*/
 
 }
