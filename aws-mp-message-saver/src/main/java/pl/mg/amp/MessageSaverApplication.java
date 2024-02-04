@@ -1,5 +1,11 @@
 package pl.mg.amp;
 
+import com.amazonaws.auth.ContainerCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -26,6 +32,22 @@ public class MessageSaverApplication {
     public void init() {
         System.out.println("Secret variable: " + secretVariable);
         System.out.println("Env variable: " + envVariable);
+
+        try {
+            System.out.println("Trying to build SQS client...");
+            AmazonSQS sqs = AmazonSQSClientBuilder.standard()
+//                    .withCredentials((new EC2ContainerCredentialsProviderWrapper().))
+                    .withRegion(Regions.EU_CENTRAL_1)
+                    .build();
+
+            System.out.println("Getting queue URL...");
+            String queueUrl = sqs.getQueueUrl("ms-queue").getQueueUrl();
+            System.out.println("Reading message...");
+            sqs.receiveMessage(queueUrl).getMessages().forEach(message
+                    -> System.out.println("Message received: " + message.getBody()));
+        } catch (Exception e) {
+            System.out.println("Error reading message: " + e.getMessage());
+        }
 //        this.getSecretCached();
     }
 
