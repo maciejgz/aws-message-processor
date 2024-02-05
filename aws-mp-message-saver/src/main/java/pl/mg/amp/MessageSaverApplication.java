@@ -1,22 +1,17 @@
 package pl.mg.amp;
 
-import com.amazonaws.auth.ContainerCredentialsProvider;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.aws.messaging.config.annotation.EnableSqs;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @SpringBootApplication
 @EnableScheduling
+@EnableSqs
 public class MessageSaverApplication {
-
 
     @Value("${secret.variable:default_secret_value}")
     private String secretVariable;
@@ -33,10 +28,10 @@ public class MessageSaverApplication {
         System.out.println("Secret variable: " + secretVariable);
         System.out.println("Env variable: " + envVariable);
 
-        try {
+       /* try {
             System.out.println("Trying to build SQS client...");
             AmazonSQS sqs = AmazonSQSClientBuilder.standard()
-//                    .withCredentials((new EC2ContainerCredentialsProviderWrapper().))
+                    .withCredentials(new DefaultAWSCredentialsProviderChain())
                     .withRegion(Regions.EU_CENTRAL_1)
                     .build();
 
@@ -45,9 +40,10 @@ public class MessageSaverApplication {
             System.out.println("Reading message...");
             sqs.receiveMessage(queueUrl).getMessages().forEach(message
                     -> System.out.println("Message received: " + message.getBody()));
+            System.out.println("Messages read...");
         } catch (Exception e) {
             System.out.println("Error reading message: " + e.getMessage());
-        }
+        }*/
 //        this.getSecretCached();
     }
 
