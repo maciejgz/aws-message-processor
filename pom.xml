@@ -10,6 +10,7 @@
   <name>aws-message-processor</name>
   <modules>
     <module>aws-mp-lambda</module>
+      <module>aws-mp-message-saver</module>
   </modules>
 
   <properties>

@@ -2,6 +2,7 @@ provider "aws" {
   region = "eu-central-1"
 }
 
+// let generated lambda jar to be replaced each time it changes - based on timestamp
 resource "null_resource" "new_jar" {
   triggers = {
     jar_timestamp = timestamp()
@@ -74,4 +75,14 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attach" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.lambda_sqs_policy.arn
 }
+
+// create ECR repository
+resource "aws_ecr_repository" "repository" {
+  name = "mg/aws-mp"
+  lifecycle {
+    ignore_changes = [name]
+  }
+}
+
+
 
