@@ -96,3 +96,4 @@ docker push <adres_ECR>/mg/aws-mp:latest
     ```
     terraform apply
     ```
+6. Github Actions - budowanie projektu i deploy na AWS - TODO

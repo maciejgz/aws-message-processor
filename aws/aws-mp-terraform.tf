@@ -84,5 +84,25 @@ resource "aws_ecr_repository" "repository" {
   }
 }
 
+// --- MESSAGE RECEIVER ---
+
+// create ECS cluster
+resource "aws_ecs_cluster" "cluster" {
+  name = "mp-fargate-cluster"
+}
+
+// create ECS IAM roles for task execution and service - TODO
+
+// create ECS Fargate task - TODO
+
+// create ECS service - TODO
+
+// --- S3 ---
+
+// create S3 bucket for storing received SQS messages - TODO
+
+
+
+
 
 
