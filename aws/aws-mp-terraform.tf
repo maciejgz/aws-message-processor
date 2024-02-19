@@ -46,7 +46,6 @@ resource "aws_iam_role" "lambda_exec" {
   )
 }
 
-
 resource "aws_sqs_queue" "ms_queue" {
   name = "ms-queue"
 }
@@ -63,7 +62,6 @@ data "aws_iam_policy_document" "lambda_sqs_policy" {
     ]
   }
 }
-
 
 resource "aws_iam_policy" "lambda_sqs_policy" {
   name        = "lambda_sqs_policy"
@@ -91,15 +89,72 @@ resource "aws_ecs_cluster" "cluster" {
   name = "mp-fargate-cluster"
 }
 
-// create ECS IAM roles for task execution and service - TODO
-
 // create ECS Fargate task - TODO
 
 // create ECS service - TODO
 
-// --- S3 ---
+// create ECS IAM roles for task execution and service - TODO
 
-// create S3 bucket for storing received SQS messages - TODO
+//-----------  Fargate SQS read policy
+data "aws_iam_policy_document" "sqs_policy" {
+  statement {
+    sid = "MSFargateSQSAccess"
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueUrl",
+      "sqs:ReceiveMessage"
+    ]
+    effect = "Allow"
+    resources = [
+      aws_sqs_queue.ms_queue.arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "fargate_sqs_policy" {
+  name        = "fargate_sqs_policy"
+  description = "Allows Lambda to send messages to SQS"
+  policy      = data.aws_iam_policy_document.sqs_policy.json
+}
+
+// TODO: Attach SQS policy to the IAM role that Fargate tasks
+
+
+// create S3 bucket for storing received SQS messages
+resource "aws_s3_bucket" "s3_bucket" {
+  bucket = "aws-ms-bucket"
+
+}
+///////////////////// S3 bucket policy
+// S3 bucket policy
+data "aws_iam_policy_document" "s3_policy" {
+  statement {
+    sid = "MSFargateS3WriteAccess"
+    actions = [
+      "s3:PutObject"
+    ]
+    effect = "Allow"
+    resources = [
+      aws_s3_bucket.s3_bucket.arn,
+      "${aws_s3_bucket.s3_bucket.arn}/*"
+    ]
+  }
+}
+
+// S3 IAM policy
+resource "aws_iam_policy" "aws_mp_s3_policy" {
+  name        = "s3_policy"
+  description = "Policy for accessing S3 bucket from Fargate"
+  policy      = data.aws_iam_policy_document.s3_policy.json
+}
+
+// TODO: Attach S3 policy to the IAM role that Fargate tasks will assume
+// This is a placeholder and should be replaced with your actual Fargate task execution role
+/*resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
+  role       = "replace_with_your_fargate_task_execution_role"
+  policy_arn = aws_iam_policy.aws_mp_s3_policy.arn
+}*/
+
 
 
 

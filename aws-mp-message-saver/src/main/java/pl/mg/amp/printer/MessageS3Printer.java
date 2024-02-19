@@ -20,7 +20,8 @@ public class MessageS3Printer implements MessagePrinter {
                 .withCredentials(new DefaultAWSCredentialsProviderChain())
                 .build();
         System.out.println("S3 client created...");
-        s3.putObject("aws-ms-saver-bucket", "ms-object-" + Instant.now().toString(), message);
+        // TODO change the bucket name and extract the object name to environment variable
+        s3.putObject("aws-ms-bucket", "ms-object-" + Instant.now().toString(), message);
         System.out.println("Message saved to S3...");
     }
 }
