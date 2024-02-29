@@ -16,9 +16,9 @@ resource "aws_lambda_function" "lambda" {
   handler  = "pl.mg.amp.lambda.LambdaFunctionHandler::handleRequest"
   runtime  = "java21"
 
-  role    = aws_iam_role.lambda_exec.arn
-  publish = true
-  timeout = 60
+  role        = aws_iam_role.lambda_exec.arn
+  publish     = true
+  timeout     = 60
   memory_size = 512
 
   source_code_hash = filebase64sha256("../aws-mp-lambda/target/aws-mp-lambda-1.0-SNAPSHOT.jar")
@@ -85,26 +85,107 @@ resource "aws_ecr_repository" "repository" {
 // --- MESSAGE RECEIVER ---
 
 // create ECS cluster
-resource "aws_ecs_cluster" "cluster" {
-  name = "mp-fargate-cluster"
+resource "aws_ecs_cluster" "mp-cluster" {
+  name = "mp-cluster"
 }
 
-// create ECS Fargate task - TODO
+// create ECS Fargate task
+resource "aws_ecs_task_definition" "mp-task" {
+  family                   = "mp-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "1024"
+  memory                   = "2048"
+  execution_role_arn       = aws_iam_role.mp-ecs-execution-role.arn
+  task_role_arn            = aws_iam_role.mp-ecs-execution-role.arn
 
-// create ECS service - TODO
+  container_definitions = jsonencode([
+    {
+      name              = "mp-container"
+      cpu               = 1024
+      memory            = 2048
+      image             = "${aws_ecr_repository.repository.repository_url}:latest"
+      log_configuration = {
+        log_driver = "awslogs"
+        options    = {
+          "awslogs-group"         = "/ecs/mp-logs"
+          "awslogs-region"        = "eu-central-1"
+          "awslogs-stream-prefix" = "ecs"
+          "aws-create-group"      = "true"
+        }
+      }
+    }
+  ])
+}
 
-// create ECS IAM roles for task execution and service - TODO
+// create ECS service
+resource "aws_ecs_service" "mp-service" {
+  name            = "mp-service"
+  cluster         = aws_ecs_cluster.mp-cluster.id
+  task_definition = aws_ecs_task_definition.mp-task.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    security_groups  = ["sg-04e1a6d5af8c1ba66"]
+    subnets          = ["subnet-03a2992334fedce89", "subnet-0e23d59e06f869aa0", "subnet-0d04d84155bcc7721"]
+    assign_public_ip = true
+  }
+}
+
+// create ECS IAM roles for task execution and service
+resource "aws_iam_role" "mp-ecs-execution-role" {
+  name = "mp-ecs-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Action    = "sts:AssumeRole",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+        Effect = "Allow",
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "execution_role_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_full_access_role_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_full_access2_role_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
+}
+
+resource "aws_iam_role_policy_attachment" "sqs_full_access_role_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "sqs_readonly_access_role_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSReadOnlyAccess"
+}
 
 //-----------  Fargate SQS read policy
 data "aws_iam_policy_document" "sqs_policy" {
   statement {
-    sid = "MSFargateSQSAccess"
+    sid     = "MSFargateSQSAccess"
     actions = [
       "sqs:SendMessage",
       "sqs:GetQueueUrl",
       "sqs:ReceiveMessage"
     ]
-    effect = "Allow"
+    effect    = "Allow"
     resources = [
       aws_sqs_queue.ms_queue.arn,
     ]
@@ -117,8 +198,11 @@ resource "aws_iam_policy" "fargate_sqs_policy" {
   policy      = data.aws_iam_policy_document.sqs_policy.json
 }
 
-// TODO: Attach SQS policy to the IAM role that Fargate tasks
-
+// Attach SQS policy to the IAM role that Fargate tasks
+resource "aws_iam_role_policy_attachment" "fargate_sqs_access_role_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = aws_iam_policy.fargate_sqs_policy.arn
+}
 
 // create S3 bucket for storing received SQS messages
 resource "aws_s3_bucket" "s3_bucket" {
@@ -129,11 +213,11 @@ resource "aws_s3_bucket" "s3_bucket" {
 // S3 bucket policy
 data "aws_iam_policy_document" "s3_policy" {
   statement {
-    sid = "MSFargateS3WriteAccess"
+    sid     = "MSFargateS3WriteAccess"
     actions = [
       "s3:PutObject"
     ]
-    effect = "Allow"
+    effect    = "Allow"
     resources = [
       aws_s3_bucket.s3_bucket.arn,
       "${aws_s3_bucket.s3_bucket.arn}/*"
@@ -150,10 +234,10 @@ resource "aws_iam_policy" "aws_mp_s3_policy" {
 
 // TODO: Attach S3 policy to the IAM role that Fargate tasks will assume
 // This is a placeholder and should be replaced with your actual Fargate task execution role
-/*resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
-  role       = "replace_with_your_fargate_task_execution_role"
+resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
   policy_arn = aws_iam_policy.aws_mp_s3_policy.arn
-}*/
+}
 
 
 
