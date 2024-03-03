@@ -4,12 +4,16 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
 @Component
 public class MessageS3Printer implements MessagePrinter {
+
+    @Value("${env.s3_bucket_name:default_bucket_name}")
+    private String bucketName;
 
     @Override
     public void printMessage(String message) {
@@ -20,7 +24,8 @@ public class MessageS3Printer implements MessagePrinter {
                 .withCredentials(new DefaultAWSCredentialsProviderChain())
                 .build();
         System.out.println("S3 client created...");
-        s3.putObject("aws-ms-saver-bucket", "ms-object-" + Instant.now().toString(), message);
+        // TODO change the bucket name and extract the object name to environment variable
+        s3.putObject(bucketName, "ms-object-" + Instant.now().toString(), message);
         System.out.println("Message saved to S3...");
     }
 }
