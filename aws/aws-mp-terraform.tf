@@ -99,21 +99,34 @@ resource "aws_ecs_task_definition" "mp-task" {
   execution_role_arn       = aws_iam_role.mp-ecs-execution-role.arn
   task_role_arn            = aws_iam_role.mp-ecs-execution-role.arn
 
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
   container_definitions = jsonencode([
     {
       name              = "mp-container"
       cpu               = 1024
       memory            = 2048
+      memoryReservation = 1024
+      essential         = true
       image             = "${aws_ecr_repository.repository.repository_url}:latest"
-      log_configuration = {
-        log_driver = "awslogs"
-        options    = {
+      logConfiguration  = {
+        logDriver = "awslogs"
+        options   = {
+          "awslogs-create-group"  = "true"
           "awslogs-group"         = "/ecs/mp-logs"
           "awslogs-region"        = "eu-central-1"
           "awslogs-stream-prefix" = "ecs"
-          "aws-create-group"      = "true"
         }
       }
+      environment = [
+        {
+          name  = "env.s3_bucket_name",
+          value = aws_s3_bucket.s3_bucket.bucket
+        }
+      ]
     }
   ])
 }
@@ -131,6 +144,11 @@ resource "aws_ecs_service" "mp-service" {
     subnets          = ["subnet-03a2992334fedce89", "subnet-0e23d59e06f869aa0", "subnet-0d04d84155bcc7721"]
     assign_public_ip = true
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }
 
 // create ECS IAM roles for task execution and service
@@ -219,7 +237,6 @@ data "aws_iam_policy_document" "s3_policy" {
     ]
     effect    = "Allow"
     resources = [
-      aws_s3_bucket.s3_bucket.arn,
       "${aws_s3_bucket.s3_bucket.arn}/*"
     ]
   }
@@ -232,7 +249,6 @@ resource "aws_iam_policy" "aws_mp_s3_policy" {
   policy      = data.aws_iam_policy_document.s3_policy.json
 }
 
-// TODO: Attach S3 policy to the IAM role that Fargate tasks will assume
 // This is a placeholder and should be replaced with your actual Fargate task execution role
 resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
   role       = aws_iam_role.mp-ecs-execution-role.name
