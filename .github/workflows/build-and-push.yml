@@ -5,6 +5,9 @@ on:
     branches:
       - 6-setup-cicd-in-github-actions
 
+env:
+  AWS_REGION
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,6 +21,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'adopt'
+          architecture: x64
 
       - name: Build with Maven
         run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
@@ -26,8 +30,8 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
-          region: eu-central-1
-          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+          region: ${{ secrets.AWS_REGION }}
+          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com
 
       - name: Push Docker image
         run: docker push ${{ steps.login-ecr.outputs.registry }}/aws-mp-message-saver:latest
