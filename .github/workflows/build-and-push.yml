@@ -5,6 +5,11 @@ on:
     branches:
       - 6-setup-cicd-in-github-actions
 
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,4 +48,5 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
         run:
+          docker tag mg/aws-mp:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/mg/aws-mp:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
