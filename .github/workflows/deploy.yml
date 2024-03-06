@@ -1,4 +1,4 @@
-name: Build and Push to ECR
+name: Build and deploy to AWS
 
 on:
   workflow_dispatch:
@@ -25,7 +25,6 @@ jobs:
       - name: Build with Maven
         id: build-image
         run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
-
 
   push-image:
     runs-on: ubuntu-latest

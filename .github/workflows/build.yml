@@ -1,10 +1,9 @@
-name: Build and Push to ECR
+name: Build project
 
 on:
   push:
     branches:
       - 6-setup-cicd-in-github-actions
-
 
 jobs:
   build:
