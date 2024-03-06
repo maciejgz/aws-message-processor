@@ -21,6 +21,7 @@ jobs:
           architecture: x64
 
       - name: Configure AWS credentials
+        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@0e613a0980cbf65ed5b322eb7a1e075d28913a83
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -32,7 +33,15 @@ jobs:
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
       - name: Build with Maven
+        id: build-image
         run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
 
       - name: Push Docker image
-        run: docker push ${{ steps.login-ecr.outputs.registry }}/aws-mp-message-saver:latest
+        id: push-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        run:
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
