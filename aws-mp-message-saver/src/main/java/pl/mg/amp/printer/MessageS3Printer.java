@@ -24,7 +24,6 @@ public class MessageS3Printer implements MessagePrinter {
                 .withCredentials(new DefaultAWSCredentialsProviderChain())
                 .build();
         System.out.println("S3 client created...");
-        // TODO change the bucket name and extract the object name to environment variable
         s3.putObject(bucketName, "ms-object-" + Instant.now().toString(), message);
         System.out.println("Message saved to S3...");
     }

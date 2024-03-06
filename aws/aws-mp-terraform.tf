@@ -12,6 +12,7 @@ resource "null_resource" "new_jar" {
 resource "aws_lambda_function" "lambda" {
   function_name = "mp-lambda"
 
+  //TODO - move it to github actions
   filename = "../aws-mp-lambda/target/aws-mp-lambda-1.0-SNAPSHOT.jar"
   handler  = "pl.mg.amp.lambda.LambdaFunctionHandler::handleRequest"
   runtime  = "java21"

@@ -1,0 +1,26 @@
+name: Build project
+
+on:
+  push:
+    branches:
+      - 6-setup-cicd-in-github-actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+          architecture: x64
+
+      - name: Build with Maven
+        id: build-image
+        run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
+
