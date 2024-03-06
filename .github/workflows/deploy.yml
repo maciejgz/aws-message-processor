@@ -10,6 +10,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency: build-job
 
     steps:
       - name: Checkout code
