@@ -20,9 +20,6 @@ jobs:
           distribution: 'adopt'
           architecture: x64
 
-      - name: Build with Maven
-        run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@0e613a0980cbf65ed5b322eb7a1e075d28913a83
         with:
@@ -32,10 +29,10 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          region: ${{ secrets.AWS_REGION }}
-          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - name: Build with Maven
+        run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
 
       - name: Push Docker image
         run: docker push ${{ steps.login-ecr.outputs.registry }}/aws-mp-message-saver:latest
