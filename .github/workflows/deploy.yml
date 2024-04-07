@@ -63,4 +63,4 @@ jobs:
           
       - name: AWS MP Lambda - Deploy to AWS Lambda
         run: |
-          aws lambda update-function-code --function-name ${{ env.LAMBDA_FUNCTION_NAME }} --zip-file fileb://aws-mp-lambda/target/aws-mp-lambda-1.0-SNAPSHOT.jar
+          aws lambda update-function-code --function-name ${{ env.LAMBDA_FUNCTION_NAME }} --zip-file fileb:///aws-mp-lambda/target/aws-mp-lambda-1.0-SNAPSHOT.jar
