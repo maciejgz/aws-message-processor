@@ -22,3 +22,5 @@ jobs:
         id: build-image
         run: mvn clean compile package
 
+
+
