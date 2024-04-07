@@ -28,9 +28,13 @@ jobs:
           distribution: 'adopt'
           architecture: x64
 
-      - name: Build with Maven
+      - name: Build with Maven - AWS MP Saver
         id: build-image
-        run: mvn clean package spring-boot:build-image -Pbuild-image
+        run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
+
+      - name: Build with Maven - AWS MP lambda
+        id: build-image
+        run: mvn compile package -pl=aws-mp-lambda
 
       - name: Configure AWS credentials
         id: aws-credentials
