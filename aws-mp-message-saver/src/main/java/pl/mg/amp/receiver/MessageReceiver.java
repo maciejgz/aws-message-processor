@@ -16,6 +16,6 @@ public class MessageReceiver {
     @SqsListener(value = "ms-queue")
     public void receiveMessage(String message) {
         System.out.println("Received ms-queue message: " + message);
-        messagePrinter.printMessage(message + " - processed by aws-mp-message-receiver2");
+        messagePrinter.printMessage(message + " - processed by aws-mp-message-receiver3");
     }
 }
