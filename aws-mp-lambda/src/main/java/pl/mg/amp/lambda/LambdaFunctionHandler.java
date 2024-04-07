@@ -34,7 +34,7 @@ public class LambdaFunctionHandler implements RequestHandler<Map<String, String>
             context.getLogger().log("Sending message...");
             SendMessageRequest send_msg_request = new SendMessageRequest()
                     .withQueueUrl(queueUrl)
-                    .withMessageBody(message + "!!!processed by Lambda!!!")
+                    .withMessageBody(message + "!!!processed by Lambda2!!!")
                     .withDelaySeconds(5);
             sqs.sendMessage(send_msg_request);
             context.getLogger().log("Message sent");
