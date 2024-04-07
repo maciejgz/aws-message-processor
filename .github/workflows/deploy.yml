@@ -30,7 +30,7 @@ jobs:
 
       - name: Build with Maven
         id: build-image
-        run: mvn clean package spring-boot:build-image -Pbuild-image -pl=aws-mp-message-saver
+        run: mvn clean package spring-boot:build-image -Pbuild-image
 
       - name: Configure AWS credentials
         id: aws-credentials
