@@ -69,6 +69,6 @@ jobs:
         run: |
           pwd
           ls -l
-          ls -l /aws-mp-lambda
+          ls -l /aws-mp-lambda/
           ls -l /aws-mp-lambda/target/
           aws lambda update-function-code --function-name ${{ env.LAMBDA_FUNCTION_NAME }} --zip-file fileb:///aws-mp-lambda/target/aws-mp-lambda-1.0-SNAPSHOT.jar
