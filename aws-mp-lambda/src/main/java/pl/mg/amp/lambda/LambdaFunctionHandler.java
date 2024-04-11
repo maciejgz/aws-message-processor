@@ -3,25 +3,34 @@ package pl.mg.amp.lambda;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 
-public class LambdaFunctionHandler implements RequestHandler<Map<String, String>, String> {
+public class LambdaFunctionHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
 
     @Override
-    public String handleRequest(Map<String, String> event, Context context) {
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         context.getLogger().log("Processing Lambda request");
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, String> entry : event.entrySet()) {
-            sb.append(entry.getKey()).append(" : ").append(entry.getValue()).append("\n");
-        }
-        sendSqSMessage(sb.toString(), context);
-        return sb.toString();
+        sendSqSMessage("Received event: " + input.getBody(), context);
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+
+        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
+        response.setStatusCode(200);
+        response.setHeaders(headers);
+        response.setBody("Success");
+
+        return response;
     }
 
     private void sendSqSMessage(String message, Context context) {
@@ -44,4 +53,5 @@ public class LambdaFunctionHandler implements RequestHandler<Map<String, String>
         }
 
     }
+
 }
