@@ -112,9 +112,9 @@ resource "aws_ecs_task_definition" "mp-task" {
       memoryReservation = 1024
       essential         = true
       image             = "${aws_ecr_repository.repository.repository_url}:latest"
-      logConfiguration  = {
+      logConfiguration = {
         logDriver = "awslogs"
-        options   = {
+        options = {
           "awslogs-create-group"  = "true"
           "awslogs-group"         = "/ecs/mp-logs"
           "awslogs-region"        = "eu-central-1"
@@ -159,7 +159,7 @@ resource "aws_iam_role" "mp-ecs-execution-role" {
     Version   = "2012-10-17",
     Statement = [
       {
-        Action    = "sts:AssumeRole",
+        Action = "sts:AssumeRole",
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         },
@@ -249,15 +249,85 @@ resource "aws_iam_policy" "aws_mp_s3_policy" {
   policy      = data.aws_iam_policy_document.s3_policy.json
 }
 
-// This is a placeholder and should be replaced with your actual Fargate task execution role
+// Fargate task execution role
 resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
   role       = aws_iam_role.mp-ecs-execution-role.name
   policy_arn = aws_iam_policy.aws_mp_s3_policy.arn
 }
 
+// API Gateway
+resource "aws_api_gateway_rest_api" "mp-api-gateway" {
+  name        = "mp-api-gateway"
+  description = "MP API Gateway for MP lambda"
 
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}
 
+resource "aws_api_gateway_resource" "root" {
+  parent_id   = aws_api_gateway_rest_api.mp-api-gateway.root_resource_id
+  path_part   = "mp-lambda"
+  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
+}
 
+resource "aws_api_gateway_method" "proxy" {
+  rest_api_id   = aws_api_gateway_rest_api.mp-api-gateway.id
+  resource_id   = aws_api_gateway_resource.root.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "lambda_integration" {
+  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
+  resource_id = aws_api_gateway_resource.root.id
+  http_method = aws_api_gateway_method.proxy.http_method
+  integration_http_method = "GET"
+  type = "AWS"
+  uri = aws_lambda_function.lambda.invoke_arn
+}
+
+resource "aws_api_gateway_method_response" "proxy" {
+  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
+  resource_id = aws_api_gateway_resource.root.id
+  http_method = aws_api_gateway_method.proxy.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration_response" "proxy" {
+  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
+  resource_id = aws_api_gateway_resource.root.id
+  http_method = aws_api_gateway_method.proxy.http_method
+  status_code = aws_api_gateway_method_response.proxy.status_code
+
+  depends_on = [
+    aws_api_gateway_method.proxy,
+    aws_api_gateway_integration.lambda_integration
+  ]
+}
+
+resource "aws_api_gateway_deployment" "deployment" {
+  depends_on = [
+    aws_api_gateway_integration.lambda_integration
+  ]
+
+  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
+  stage_name  = "dev"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role = aws_iam_role.lambda_exec.name
+}
+
+resource "aws_lambda_permission" "api_gw_lambda" {
+  statement_id = "AllowExecutionFromAPIGateway"
+  action = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_api_gateway_rest_api.mp-api-gateway.execution_arn}/${aws_api_gateway_deployment.deployment.stage_name}/${aws_api_gateway_method.proxy.http_method}/${aws_api_gateway_resource.root.path_part}"
+}
 
 
 
