@@ -112,9 +112,9 @@ resource "aws_ecs_task_definition" "mp-task" {
       memoryReservation = 1024
       essential         = true
       image             = "${aws_ecr_repository.repository.repository_url}:latest"
-      logConfiguration  = {
+      logConfiguration = {
         logDriver = "awslogs"
-        options   = {
+        options = {
           "awslogs-create-group"  = "true"
           "awslogs-group"         = "/ecs/mp-logs"
           "awslogs-region"        = "eu-central-1"
@@ -159,7 +159,7 @@ resource "aws_iam_role" "mp-ecs-execution-role" {
     Version   = "2012-10-17",
     Statement = [
       {
-        Action    = "sts:AssumeRole",
+        Action = "sts:AssumeRole",
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         },
@@ -249,15 +249,46 @@ resource "aws_iam_policy" "aws_mp_s3_policy" {
   policy      = data.aws_iam_policy_document.s3_policy.json
 }
 
-// This is a placeholder and should be replaced with your actual Fargate task execution role
+// Fargate task execution role
 resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
   role       = aws_iam_role.mp-ecs-execution-role.name
   policy_arn = aws_iam_policy.aws_mp_s3_policy.arn
 }
 
+// API Gateway
+resource "aws_apigatewayv2_api" "mp-api-gateway" {
+  name          = "mp-api-gateway"
+  description   = "MP API Gateway for MP lambda"
+  protocol_type = "HTTP"
+}
 
+resource "aws_apigatewayv2_integration" "mp-api-gateway-integration" {
+  api_id             = aws_apigatewayv2_api.mp-api-gateway.id
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+  integration_uri    = aws_lambda_function.lambda.invoke_arn
+}
 
+resource "aws_apigatewayv2_route" "example" {
+  api_id    = aws_apigatewayv2_api.mp-api-gateway.id
+  route_key = "ANY /"
+  target    = "integrations/${aws_apigatewayv2_integration.mp-api-gateway-integration.id}"
+}
 
+resource "aws_apigatewayv2_stage" "example" {
+  api_id      = aws_apigatewayv2_api.mp-api-gateway.id
+  name        = "dev"
+  auto_deploy = true
+}
+
+resource "aws_lambda_permission" "api_gw_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.mp-api-gateway.execution_arn}/*/*"
+}
 
 
 
