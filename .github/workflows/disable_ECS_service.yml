@@ -29,3 +29,7 @@ jobs:
       - name: Set ECS desired count to 0
         run: |
           aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.ECS_SERVICE }} --desired-count 0
+
+      - name: Remove API Gateway
+        run: | 
+          aws apigatewayv2 delete-api --api-id mp-api-gateway

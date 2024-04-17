@@ -256,77 +256,38 @@ resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
 }
 
 // API Gateway
-resource "aws_api_gateway_rest_api" "mp-api-gateway" {
-  name        = "mp-api-gateway"
-  description = "MP API Gateway for MP lambda"
-
-  endpoint_configuration {
-    types = ["REGIONAL"]
-  }
+resource "aws_apigatewayv2_api" "mp-api-gateway" {
+  name          = "mp-api-gateway"
+  description   = "MP API Gateway for MP lambda"
+  protocol_type = "HTTP"
 }
 
-resource "aws_api_gateway_resource" "root" {
-  parent_id   = aws_api_gateway_rest_api.mp-api-gateway.root_resource_id
-  path_part   = "mp-lambda"
-  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
+resource "aws_apigatewayv2_integration" "mp-api-gateway-integration" {
+  api_id             = aws_apigatewayv2_api.mp-api-gateway.id
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+  integration_uri    = aws_lambda_function.lambda.invoke_arn
 }
 
-resource "aws_api_gateway_method" "proxy" {
-  rest_api_id   = aws_api_gateway_rest_api.mp-api-gateway.id
-  resource_id   = aws_api_gateway_resource.root.id
-  http_method   = "GET"
-  authorization = "NONE"
+resource "aws_apigatewayv2_route" "example" {
+  api_id    = aws_apigatewayv2_api.mp-api-gateway.id
+  route_key = "ANY /"
+  target    = "integrations/${aws_apigatewayv2_integration.mp-api-gateway-integration.id}"
 }
 
-resource "aws_api_gateway_integration" "lambda_integration" {
-  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
-  resource_id = aws_api_gateway_resource.root.id
-  http_method = aws_api_gateway_method.proxy.http_method
-  integration_http_method = "GET"
-  type = "AWS"
-  uri = aws_lambda_function.lambda.invoke_arn
-}
-
-resource "aws_api_gateway_method_response" "proxy" {
-  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
-  resource_id = aws_api_gateway_resource.root.id
-  http_method = aws_api_gateway_method.proxy.http_method
-  status_code = "200"
-}
-
-resource "aws_api_gateway_integration_response" "proxy" {
-  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
-  resource_id = aws_api_gateway_resource.root.id
-  http_method = aws_api_gateway_method.proxy.http_method
-  status_code = aws_api_gateway_method_response.proxy.status_code
-
-  depends_on = [
-    aws_api_gateway_method.proxy,
-    aws_api_gateway_integration.lambda_integration
-  ]
-}
-
-resource "aws_api_gateway_deployment" "deployment" {
-  depends_on = [
-    aws_api_gateway_integration.lambda_integration
-  ]
-
-  rest_api_id = aws_api_gateway_rest_api.mp-api-gateway.id
-  stage_name  = "dev"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_basic" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role = aws_iam_role.lambda_exec.name
+resource "aws_apigatewayv2_stage" "example" {
+  api_id      = aws_apigatewayv2_api.mp-api-gateway.id
+  name        = "dev"
+  auto_deploy = true
 }
 
 resource "aws_lambda_permission" "api_gw_lambda" {
-  statement_id = "AllowExecutionFromAPIGateway"
-  action = "lambda:InvokeFunction"
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda.function_name
-  principal = "apigateway.amazonaws.com"
+  principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_api_gateway_rest_api.mp-api-gateway.execution_arn}/${aws_api_gateway_deployment.deployment.stage_name}/${aws_api_gateway_method.proxy.http_method}/${aws_api_gateway_resource.root.path_part}"
+  source_arn = "${aws_apigatewayv2_api.mp-api-gateway.execution_arn}/*/*"
 }
 
 

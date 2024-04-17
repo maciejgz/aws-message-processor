@@ -73,12 +73,15 @@ Przechowuje przetworzone wiadomości w formacie JSON do dalszego przetwarzania p
 
 #### Deploy to AWS
 
-Uwaga: deploy uruchamia jeden działający proces w AWS ECS Fargate, który jest płatny nawet pomimo posiadania free tier. Należy zwrócić uwagę na koszty
+Uwaga: deploy uruchamia jeden działający proces w AWS ECS Fargate, który jest płatny nawet pomimo posiadania free tier.
+Należy zwrócić uwagę na koszty
 
 1. Zainstaluj AWS CLI
 2. Skonfiguruj AWS CLI
-3. Push obrazu aws-mp-message-saver do ECR powinien być wykonany automatycznie przez GitHub Actions (TODO) - ręcznie push
+3. Push obrazu aws-mp-message-saver do ECR powinien być wykonany automatycznie przez GitHub Actions (TODO) - ręcznie
+   push
    obrazu można wykonać poleceniem opisanym w `View push commands` w konsoli ECR. Zazwyczaj wygląda to tak:
+
 ```
 skonfigurwoać AWS CLI
 komendy do wykonania w PowerShell:
@@ -86,6 +89,7 @@ komendy do wykonania w PowerShell:
 docker tag mg/aws-mp:latest <adres_ECR>/mg/aws-mp:latest
 docker push <adres_ECR>/mg/aws-mp:latest
 ```
+
 4. Skonfiguruj Terraform w katalogu `aws` jeśli nie ma w nim katalogu `.terraform`:
    ```
    terraform init
@@ -99,3 +103,8 @@ docker push <adres_ECR>/mg/aws-mp:latest
     terraform apply
     ```
 6. Github Actions - budowanie projektu i deploy nowej wersji taska oraz serwisu do ECS na AWS
+
+#### Test
+
+Aplikacja wystawia API poprzez API Gateway pozwalające na uruchomienie całego procesu. Endpoint jest POSTem, URL do
+sprawdzenia w konsoli API Gateway.
