@@ -125,6 +125,10 @@ resource "aws_ecs_task_definition" "mp-task" {
         {
           name  = "env.s3_bucket_name",
           value = aws_s3_bucket.s3_bucket.bucket
+        },
+        {
+          name = "env.variable",
+          value = "value set in terraform"
         }
       ]
     }

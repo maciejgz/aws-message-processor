@@ -16,7 +16,6 @@ import java.util.Map;
 
 public class LambdaFunctionHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         context.getLogger().log("Processing Lambda request");
