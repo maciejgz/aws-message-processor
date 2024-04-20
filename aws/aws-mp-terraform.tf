@@ -127,7 +127,7 @@ resource "aws_ecs_task_definition" "mp-task" {
           value = aws_s3_bucket.s3_bucket.bucket
         },
         {
-          name = "env.variable",
+          name  = "env.variable",
           value = "value set in terraform"
         }
       ]
@@ -292,6 +292,43 @@ resource "aws_lambda_permission" "api_gw_lambda" {
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.mp-api-gateway.execution_arn}/*/*"
+}
+
+// create secret manager secret
+resource "aws_secretsmanager_secret" "mp-secret" {
+  name        = "mp.secret.variable"
+  description = "Secret for MP"
+}
+
+// create secret manager secret version
+resource "aws_secretsmanager_secret_version" "mp-secret-version" {
+  secret_id     = aws_secretsmanager_secret.mp-secret.id
+  secret_string = "secret"
+}
+
+
+//add permissions to ECS task to access secret
+data "aws_iam_policy_document" "ecs-secret" {
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret"
+    ]
+    resources = [
+      aws_secretsmanager_secret.mp-secret.arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ecs-secret-policy" {
+  name        = "ecs-secret-policy"
+  description = "Allows ECS task to access secret"
+  policy      = data.aws_iam_policy_document.ecs-secret.json
+}
+
+resource "aws_iam_role_policy_attachment" "ecs-secret-policy-attach" {
+  role       = aws_iam_role.mp-ecs-execution-role.name
+  policy_arn = aws_iam_policy.ecs-secret-policy.arn
 }
 
 
